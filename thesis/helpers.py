@@ -5,8 +5,9 @@ from datasets import load_dataset
 from functools import partial
 from tqdm.auto import tqdm
 import random
-from thesis.embeddings import *
-from thesis.methods import *
+#from thesis.embeddings import *
+import math
+from thesis.metafunctions import *
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -26,8 +27,3 @@ def format_sample(example):
     return {
         "text": f"Q: {example['question']}\nContext: {example['context']}\nA: {answer}"
     }
-
-
-def embed_column(dataset, column="context",size=2000):
-    embeddings = [EmbeddingModel.get_embeddings(ctx) for ctx in dataset[column][:size]]
-    return embeddings

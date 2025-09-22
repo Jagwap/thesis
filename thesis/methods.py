@@ -19,3 +19,16 @@ def find_clusters(positions,n_clusters = 3):
         cluster_means.append(cluster_mean)
     cluster_means = np.vstack(cluster_means)
     return cluster_means
+
+
+def fps(values,target):
+    chosen = [values[0], values[-1]]
+    remaining = set(values[1:-1])
+    res = []
+    while len(chosen) < target and remaining:
+        best = max(remaining, key=lambda x: min(abs(x - c) for c in chosen))
+        res.append(values.index(best))
+        chosen.append(best)
+        remaining.remove(best)
+
+    return sorted(res)

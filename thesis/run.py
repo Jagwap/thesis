@@ -25,15 +25,16 @@ class ModelRunner:
       encoding["labels"] = encoding["input_ids"][:] 
       return encoding
 
-    def format_inputs( self,dataset,mask_train=lambda x:x.select(range(2000)),mask_eval = lambda x: x.select(range(200)),format_sample = format_sample):
+    def format_inputs( self,dataset,mask_train=lambda x:x.select(range(2000)),mask_eval = lambda x: x.select(range(200)),
+                      format_sample = format_sample,mask_train_args = {}, mask_eval_args = {}, **args):
         formatted_dataset = dataset.map(format_sample)
         tokenized = formatted_dataset.map(self.tokenize_batch, batched=True)
 
 
-        train = mask_train(tokenized["train"])
+        train = mask_train(tokenized["train"],**mask_train_args)
         train.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"], output_all_columns=True)
 
-        evaluate = mask_eval(tokenized["validation"])
+        evaluate = mask_eval(tokenized["validation"],**mask_eval_args)
         evaluate.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 
         return train, evaluate
@@ -48,7 +49,7 @@ class ModelRunner:
         self.train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True,worker_init_fn=seed_worker,generator=g)
         self.eval_loader = DataLoader(evaluate, batch_size=batch_size,shuffle=False, num_workers=2, pin_memory=True,worker_init_fn=seed_worker,generator=g)
 
-    def train(self, epochs = 3,update = lambda batch,step,optimizer: None):
+    def train(self, epochs = 3,update = lambda batch,step,optimizer: None, update_args = {}):
         num_epochs = epochs
         num_training_steps = num_epochs * len(self.train_loader)
         warmup_steps = int(0.06 * num_training_steps)
@@ -62,7 +63,7 @@ class ModelRunner:
             for batch in loop:
                 batch = {k: v.to(self.device) for k, v in batch.items() if torch.is_tensor(v)}
 
-                update(batch, epoch * len(self.train_loader) + loop.n,self.optimizer)
+                update(batch, epoch * len(self.train_loader) + loop.n,self.optimizer, **update_args)
 
                 self.optimizer.zero_grad() 
                 with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):

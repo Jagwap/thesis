@@ -8,6 +8,9 @@ import random
 #from thesis.embeddings import *
 import math
 from thesis.metafunctions import *
+import torch
+import evaluate
+from typing import List, Dict
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -27,3 +30,14 @@ def format_sample(example):
     return {
         "text": f"Q: {example['question']}\nContext: {example['context']}\nA: {answer}"
     }
+def clean_generated_text(s: str) -> str:
+    """
+    Minimal cleaning of LM output: strip whitespace and cut at newline double break if present.
+    Adjust to your prompt formatting (stop tokens, etc.).
+    """
+    s = s.strip()
+    # Cut at first newline or '###' or other separators often used
+    for sep in ["\n\n", "\n", "###", "—", "- - -"]:
+        if sep in s:
+            s = s.split(sep)[0].strip()
+    return s
